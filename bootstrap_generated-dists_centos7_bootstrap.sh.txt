@@ -129,22 +129,22 @@ if [ ! -f /usr/bin/python3 ]; then
     sudo ln -sf /usr/bin/python3.6 /usr/bin/python3
 fi
 
-DEVICE=$(ls -l /sys/class/net | awk '$NF~/pci0/ { print $(NF-2); exit }')
-IPADDR=$(ip -br address show dev $DEVICE | awk '{print substr($3,1,index($3,"/")-1);}')
+#DEVICE=$(ls -l /sys/class/net | awk '$NF~/pci0/ { print $(NF-2); exit }')
+#IPADDR=$(ip -br address show dev $DEVICE | awk '{print substr($3,1,index($3,"/")-1);}')
 
-mkdir samba-ad
+/bin/mkdir samba-ad
 cd samba-ad
-curl -O https://download.samba.org/pub/samba/stable/samba-4.10.7.tar.gz
-tar xvfz samba-4.10.7.tar.gz
+/bin/curl -O https://download.samba.org/pub/samba/stable/samba-4.10.7.tar.gz
+/bin/tar xvfz samba-4.10.7.tar.gz
 cd samba-4.10.7*
 ./configure --disable-cups --enable-debug
-make -j 2
-make test
+/bin/make -j 2
+/bin/make test
 sudo make install
 
 sudo mv /etc/krb5.conf /etc/krb5.conf.old
 
-sudo samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=INFRA.CO.KR --domain=INFRA --adminpass=P@ssw0rd
+sudo /usr/local/samba/bin/samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=INFRA.CO.KR --domain=INFRA --adminpass=P@ssw0rd
 
 sudo cat <<EOF >> /usr/local/samba/private/kdc.conf
 [kdcdefaults]
@@ -184,7 +184,6 @@ sudo cat <<EOF >> /usr/local/samba/private/kdc.conf
        admin_server = FILE:/var/log/samba/mit_kadmin.log
 EOF
 
-sudo /usr/local/samba/sbin/samba-tool dns zonecreate 172.17.175.93 175.17.172.in-addr.arpa
 sudo cp /usr/local/samba/private/krb5.conf /etc/krb5.conf
 
 sudo cat <<EOF >/etc/systemd/system/samba-ad-dc.service
@@ -226,15 +225,14 @@ sudo systemctl daemon-reload
 sudo systemctl enable samba-ad-dc
 sudo systemctl start samba-ad-dc
 
-smbclient -L localhost -U%
-smbclient //localhost/netlogon -UAdministrator -c 'ls'
+sudo /usr/local/samba/bin/samba-tool dns zonecreate 172.17.175.93 175.17.172.in-addr.arpa -Uadministrator
+/usr/local/samba/bin/smbclient -L localhost -U%
+/usr/local/samba/bin/smbclient //localhost/netlogon -UAdministrator -c 'ls'
+sudo /usr/local/samba/bin/net ads join -U administrator
+sudo /usr/local/samba/bin/net cache flush
 kinit administrator
-
-sudo net cache flush
-
 
 sudo wbinfo --ping-dc
 
-#sudo authconfig-tui
+#sudo /sbin/authconfig-tui
 
-sudo net ads join -U administrator
