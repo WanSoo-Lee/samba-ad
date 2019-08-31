@@ -146,20 +146,20 @@ sudo mv /etc/krb5.conf /etc/krb5.conf.old
 
 sudo samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=INFRA.CO.KR --domain=INFRA --adminpass=P@ssw0rd
 
-sudo cat <<EOF > /usr/local/samba/private/kdc.conf
+sudo cat <<EOF >> /usr/local/samba/private/kdc.conf
 [kdcdefaults]
        kdc_ports = 88
        kdc_tcp_ports = 88
        kadmind_port = 464
 
 [realms]
-       SAMDOM.EXAMPLE.COM = {
+       INFRA.CO.KR = {
        }
 
-        samdom.example.com = {
+        infra.co.kr = {
        }
 
-       SAMDOM = {
+       INFRA = {
 	}
 
 [dbmodules]
@@ -167,15 +167,15 @@ sudo cat <<EOF > /usr/local/samba/private/kdc.conf
        # that contains the samba.so database module:
        db_module_dir = /usr/local/samba/lib/krb5/plugins/kdb/
 
-       SAMDOM.EXAMPLE.COM = {
+       INFRA.CO.KR = {
                db_library = samba
        }
 
-       samdom.example.com = {
+       infra.co.kr = {
                db_library = samba
        }
 
-       SAMDOM = {
+       INFRA = {
                db_library = samba
        }
 
@@ -213,6 +213,15 @@ sudo cat <<EOF >>/usr/local/samba/etc/user.map
 !root = SAMDOM\Administrator SAMDOM\administrator
 EOF
 
+
+sudo ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib64/
+sudo ln -s /lib64/libnss_winbind.so.2 /lib64/libnss_winbind.so
+sudo ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib/
+sudo ln -s /lib/libnss_winbind.so.2 /lib/libnss_winbind.so
+sudo ln -s /usr/local/samba/lib/security/pam_winbind.so /lib64/security/
+sudo ln -s /usr/local/samba/lib/security/pam_winbind.so /lib/security/
+sudo ldconfig
+
 sudo systemctl daemon-reload
 sudo systemctl enable samba-ad-dc
 sudo systemctl start samba-ad-dc
@@ -223,13 +232,6 @@ kinit administrator
 
 sudo net cache flush
 
-sudo ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib64/
-sudo ln -s /lib64/libnss_winbind.so.2 /lib64/libnss_winbind.so
-sudo ln -s /usr/local/samba/lib/libnss_winbind.so.2 /lib/
-sudo ln -s /lib/libnss_winbind.so.2 /lib/libnss_winbind.so
-sudo ln -s /usr/local/samba/lib/security/pam_winbind.so /lib64/security/
-sudo ln -s /usr/local/samba/lib/security/pam_winbind.so /lib/security/
-sudo ldconfig
 
 sudo wbinfo --ping-dc
 
